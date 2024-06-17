@@ -14,7 +14,10 @@ Automatic Movement
 -Duck jump(Perfect)
 
 
-[In case of problems Contact me on Telegram](https://t.me/TerminatorMachine)
+[In case of problems Contact me on Telegram]
+
+(https://t.me/TerminatorMachine)
+
 https://t.me/TerminatorMachine
 (DIscaord) : terminator2481
 
