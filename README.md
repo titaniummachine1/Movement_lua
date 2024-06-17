@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-# CMovement lua
+# Movement lua
 https://streamable.com/g3duw7
 
 ## Description
