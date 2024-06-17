@@ -2,16 +2,21 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-# Cheater_Detection
-![image](https://github.com/titaniummachine1/Cheater_Detection/assets/78664175/0b551b8b-1585-42b8-bbed-17104350e8d9)
+# CMovement lua
+https://streamable.com/g3duw7
 
 ## Description
-Automatic bot and cheater detection and adds priority on cheaters.
-with visuals based on Rijin
+Automatic Movement
+
+## Curently Suproted movement Autoamtions
+
+-smart jump
+-Duck jump(Perfect)
 
 
 [In case of problems Contact me on Telegram](https://t.me/TerminatorMachine)
 https://t.me/TerminatorMachine
+(DIscaord) : terminator2481
 
 ## Requirements
 Click on the buttons below to download the requirements. V
@@ -22,8 +27,6 @@ Click on the buttons below to download the requirements. V
 
 
 ## Download
-[![Download Latest](https://img.shields.io/github/downloads/titaniummachine1/Cheater_Priority/total.svg?style=for-the-badge&logo=download&label=Download%20Latest)](https://github.com/titaniummachine1/Cheater_Detection/releases/latest/download/Cheater_Detection.lua)
-
-![image](https://github.com/titaniummachine1/Cheater_Detection/assets/78664175/bc8ea7b4-1313-46c2-a3a3-87b71ce0116b)
+[![Download Latest](https://img.shields.io/github/downloads/titaniummachine1/Movement_lua/total.svg?style=for-the-badge&logo=download&label=Download%20Latest)](https://github.com/titaniummachine1/Movement_lua/releases/latest/download/Movement.lua)
 
 
