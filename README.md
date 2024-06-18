@@ -4,8 +4,7 @@
 
 # Movement lua
 
-[![Streamable Video](assets/thumbnail.jpg)](https://streamable.com/g3duw7)
-
+<iframe allow="fullscreen;autoplay" allowfullscreen height="576" src="https://streamable.com/e/g3duw7?autoplay=1" width="1024" style="border:none;"></iframe>
 
 
 
