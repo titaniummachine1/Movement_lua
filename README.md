@@ -16,6 +16,7 @@ Automatic Movement
 ## Curently Suproted movement Autoamtions
 
 -smart jump
+
 -Duck jump(Perfect)
 
 
