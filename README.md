@@ -4,25 +4,7 @@
 
 # Movement lua
 
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embed Streamable Video</title>
-</head>
-<body>
-    <h1>Streamable Video Embed</h1>
-    <iframe 
-        src="https://streamable.com/e/g3duw7" 
-        width="640" 
-        height="360" 
-        frameborder="0" 
-        allowfullscreen>
-    </iframe>
-</body>
-</html>
+[![Streamable Video](assets/thumbnail.jpg)](https://streamable.com/g3duw7)
 
 
 
