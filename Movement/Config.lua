@@ -114,35 +114,27 @@ local function LoadFromFile(filePath, defaultData, successMessage, errorMessage)
 end
 
 -- Save the current configuration to file
-function Config:Save()
-    SaveToFile(configFilePath, copyMatchingKeys(G, defaultConfig), "Saved Config to", "Failed to open file for writing")
+function Config:Save(fileName)
+    local filePath = fullPath .. "/" .. fileName
+    SaveToFile(filePath, copyMatchingKeys(G, defaultConfig), "Saved to", "Failed to open file for writing")
 end
 
 -- Load configuration from file
-function Config:Load()
-    LoadFromFile(configFilePath, defaultConfig, "Loaded Config from", "Failed to load config")
-end
-
--- Save recordings to file
-function Config:SaveRecordings()
-    SaveToFile(recordingsFilePath, G.Recordings, "Saved Recordings to", "Failed to open file for writing")
-end
-
--- Load recordings from file
-function Config:LoadRecordings()
-    LoadFromFile(recordingsFilePath, {}, "Loaded Recordings from", "Failed to load recordings")
+function Config:Load(fileName)
+    local filePath = fullPath .. "/" .. fileName
+    LoadFromFile(filePath, defaultConfig, "Loaded from", "Failed to load")
 end
 
 local function OnUnload()
-    Config:Save()
-    Config:SaveRecordings()
+    Config:Save("config.json")
+    Config:Save("recordings.json")
 end
 
 callbacks.Unregister("Unload", "Movement_Unload")
 callbacks.Register("Unload", "Movement_Unload", OnUnload)
 
 -- Auto-load the configuration and recordings when the module is required.
-Config:Load()
-Config:LoadRecordings()
+Config:Load("config.json")
+Config:Load("recordings.json")
 
 return Config

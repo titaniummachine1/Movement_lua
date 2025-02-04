@@ -13,9 +13,6 @@ require("Movement.Menu")    -- wake up the menu
 local SmartJump = require("Movement.Modules.SmartJump") -- Import the SmartJump module
 local Recorder = require("Movement.Modules.Recorder") -- Import the Recorder module
 
--- Load recordings on script start
-Recorder.LoadRecordings()
-
 local function OnCreateMove(cmd)
     -- Get the local player
     G.pLocal = entities.GetLocalPlayer()
@@ -102,8 +99,3 @@ end
 
 callbacks.Unregister("CreateMove", "jumpbughanddd")
 callbacks.Register("CreateMove", "jumpbughanddd", OnCreateMove)
-
--- Save recordings on script unload
-callbacks.Register("Unload", function()
-    Recorder.SaveRecordings()
-end)

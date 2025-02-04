@@ -27,7 +27,7 @@ end
 
 -- Smart jump logic
 function SmartJump.Execute(cmd)
-    if not G.pLocal then return end
+    if not G.pLocal or not G.pLocal:IsAlive() then return end
 
     -- Get the player's data
     local pLocalPos = G.pLocal:GetAbsOrigin()
@@ -57,7 +57,7 @@ function SmartJump.Execute(cmd)
             G.JumpPeekPos = traceDown.endpos
 
             if traceDown.fraction > 0 and traceDown.fraction < 0.75 then
-                local normal = traceDown.plane
+                local normal = traceDown.plane --plane is same as normal but normal gives errror cuz its undefined
                 if Common.isSurfaceWalkable(normal) then
                     G.ShouldJump = true
                 else

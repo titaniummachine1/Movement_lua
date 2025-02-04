@@ -80,7 +80,7 @@ local AtRightPos = false
 ---@param userCmd UserCmd
 local function OnCreateMove(userCmd)
     local pLocal = entities.GetLocalPlayer()
-    if not pLocal and pLocal:IsAlive() then return end
+    if not pLocal or not pLocal:IsAlive() then return end
 
     if isRecording then
         AtRightPos = false
@@ -254,16 +254,6 @@ local function OnDraw()
 
         ImMenu.End()
     end
-end
-
--- Save recordings to file
-function Recorder.SaveRecordings()
-    Config.SaveToFile(recordingsFilePath, G.Recordings, "Saved Recordings to", "Failed to open file for writing")
-end
-
--- Load recordings from file
-function Recorder.LoadRecordings()
-    Config.LoadFromFile(recordingsFilePath, {}, "Loaded Recordings from", "Failed to load recordings")
 end
 
 callbacks.Unregister("CreateMove", "LNX.Recorder.CreateMove")
