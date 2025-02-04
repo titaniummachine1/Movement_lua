@@ -63,15 +63,18 @@ local function WalkTo(pCmd, pLocal, pDestination)
     end
 end
 
-local currentTick = 0
-local currentData = {}
-local currentSize = 1
+Recorder.currentTick = 0
+Recorder.currentData = {}
+Recorder.currentSize = 1
 
-local isRecording = false
-local isPlaying = false
+Recorder.isRecording = false
+Recorder.isPlaying = false
 
-local doRepeat = false
-local doViewAngles = true
+Recorder.doRepeat = false
+Recorder.doViewAngles = true
+
+Recorder.recordings = {}
+Recorder.selectedRecording = nil
 
 local vHitbox = {Min = Vector3(-23, -23, 0), Max = Vector3(23, 23, 81)}
 local setuptimer = 128
@@ -82,10 +85,10 @@ local function OnCreateMove(userCmd)
     local pLocal = entities.GetLocalPlayer()
     if not pLocal or not pLocal:IsAlive() then return end
 
-    if isRecording then
+    if Recorder.isRecording then
         AtRightPos = false
         local yaw, pitch, roll = userCmd:GetViewAngles()
-        currentData[currentTick] = {
+        Recorder.currentData[Recorder.currentTick] = {
             viewAngles = EulerAngles(yaw, pitch, roll),
             forwardMove = userCmd:GetForwardMove(),
             sideMove = userCmd:GetSideMove(),
@@ -93,30 +96,30 @@ local function OnCreateMove(userCmd)
             position =  pLocal:GetAbsOrigin(),
         }
 
-        currentSize = currentSize + 1
-        currentTick = currentTick + 1
-    elseif isPlaying then
+        Recorder.currentSize = Recorder.currentSize + 1
+        Recorder.currentTick = Recorder.currentTick + 1
+    elseif Recorder.isPlaying then
         if userCmd.forwardmove ~= 0 or userCmd.sidemove ~= 0 then return end --input bypass
 
-        if currentTick >= currentSize - 1 or currentTick >= currentSize + 1 then
-            if doRepeat then
-                currentTick = 0
+        if Recorder.currentTick >= Recorder.currentSize - 1 or Recorder.currentTick >= Recorder.currentSize + 1 then
+            if Recorder.doRepeat then
+                Recorder.currentTick = 0
                 AtRightPos = false
             else
                 AtRightPos = false
-                isPlaying = false
+                Recorder.isPlaying = false
             end
         end
 
-        local data = currentData[currentTick]
-        if currentData[currentTick] == nil then return end --dont do anyyhign if data is inalid
+        local data = Recorder.currentData[Recorder.currentTick]
+        if Recorder.currentData[Recorder.currentTick] == nil then return end --dont do anyyhign if data is inalid
 
             userCmd:SetViewAngles(data.viewAngles:Unpack())
             userCmd:SetForwardMove(data.forwardMove)
             userCmd:SetSideMove(data.sideMove)
             userCmd:SetButtons(data.buttons)
 
-            if doViewAngles then
+            if Recorder.doViewAngles then
                 engine.SetViewAngles(data.viewAngles)
             end
 
@@ -149,117 +152,92 @@ local function OnCreateMove(userCmd)
 
             --local AntiStucktrace = engine.TraceHull(pLocal:GetAbsOrigin(), data.position, vHitbox.Min, vHitbox.Max, MASK_PLAYERSOLID_BRUSHONLY)
             --f AntiStucktrace.fraction < 1 zthen
-                currentTick = currentTick + 1
+                Recorder.currentTick = Recorder.currentTick + 1
             --else
-            --    currentTick = currentTick - 1
+            --    Recorder.currentTick = Recorder.currentTick - 1
             --end
     end
 end
 
-local function Reset()
+function Recorder.Reset()
     AtRightPos = false
-    isRecording = false
-    isPlaying = false
-    currentTick = 0
-    currentData = {}
-    currentSize = 1
+    Recorder.isRecording = false
+    Recorder.isPlaying = false
+    Recorder.currentTick = 0
+    Recorder.currentData = {}
+    Recorder.currentSize = 1
 end
 
-local function OnDraw()
-    draw.SetFont(Fonts.Verdana)
-    draw.Color(255, 255, 255, 255)
-
-    if isRecording then
-        draw.Text(20, 120, string.format("Recording... (%d)", currentTick, currentSize))
-    elseif not AtRightPos then
-        draw.Text(20, 120, string.format("Preparing Starting Pos... (%d / %d)", currentTick, currentSize))
-    elseif isPlaying then
-        draw.Text(20, 120, string.format("Playing... (%d / %d)", currentTick, currentSize))
+function Recorder.GetRecordings()
+    local names = {}
+    for name, _ in pairs(Recorder.recordings) do
+        table.insert(names, name)
     end
+    return names
+end
 
-    if not engine.IsGameUIVisible() and not (isPlaying or isRecording) then return end
+function Recorder.GetSelectedRecording()
+    return Recorder.selectedRecording
+end
 
-    if ImMenu.Begin("Movement Recorder", true) then
-
-        -- Progress bar
-        ImMenu.BeginFrame(1)
-        ImMenu.PushStyle("ItemSize", { 385, 30 })
-
-        local MaxSize = (currentSize > 0 and currentSize < 1000 and isRecording and not isPlaying) and 1000 or currentSize
-        if isRecording and (currentSize > MaxSize or currentTick > MaxSize) then
-            MaxSize = math.max(currentSize, currentTick)
-        end
-        if isRecording then
-            currentTick = ImMenu.Slider("Tick", currentTick, 0, MaxSize)
-        else
-            currentTick = ImMenu.Slider("Tick", currentTick, 0, currentSize)
-        end
-
-        ImMenu.PopStyle()
-        ImMenu.EndFrame()
-
-        -- Buttons
-        ImMenu.BeginFrame(1)
-        ImMenu.PushStyle("ItemSize", { 125, 30 })
-
-            local recordButtonText = isRecording and "Stop Recording" or "Start Recording"
-            if ImMenu.Button(recordButtonText) then
-                isRecording = not isRecording
-                if isRecording then
-                    isPlaying = false
-                    currentTick = 0
-                    currentData = {}
-                    currentSize = 1
-                else
-                    isPlaying = true
-                end
-            end
-
-            local playButtonText
-            if currentData[currentTick] == nil and currentTick == 0 then
-                playButtonText = "No Record"
-            elseif isPlaying then
-                playButtonText = "Pause"
-            else
-                playButtonText = "Play"
-            end
-
-            if ImMenu.Button(playButtonText) then
-                if isRecording then
-                    isRecording = false
-                    isPlaying = true
-                    currentTick = 0
-                elseif isPlaying then
-                    isPlaying = false
-                else
-                    isPlaying = true
-                    currentTick = 0
-                end
-            end
-
-            if ImMenu.Button("Reset") then
-                Reset()
-            end
-
-        ImMenu.PopStyle()
-            ImMenu.EndFrame()
-
-            -- Options
-            ImMenu.BeginFrame(1)
-
-                doRepeat = ImMenu.Checkbox("Auto Repeat", doRepeat)
-                doViewAngles = ImMenu.Checkbox("Apply View Angles", doViewAngles)
-
-            ImMenu.EndFrame()
-
-        ImMenu.End()
+function Recorder.SelectRecording(name)
+    if Recorder.recordings[name] then
+        Recorder.selectedRecording = name
+        Recorder.currentData = Recorder.recordings[name].data
+        Recorder.currentSize = #Recorder.currentData
+        Recorder.currentTick = 0
     end
+end
+
+function Recorder.StartNewRecording()
+    local name = "Recording " .. tostring(#Recorder.recordings + 1)
+    Recorder.recordings[name] = { data = {} }
+    Recorder.SelectRecording(name)
+    Recorder.isRecording = true
+    Recorder.isPlaying = false
+end
+
+function Recorder.DeleteSelectedRecording()
+    if Recorder.selectedRecording then
+        Recorder.recordings[Recorder.selectedRecording] = nil
+        Recorder.selectedRecording = nil
+        Recorder.Reset()
+    end
+end
+
+function Recorder.ToggleRecording()
+    if Recorder.isRecording then
+        Recorder.isRecording = false
+        if Recorder.selectedRecording then
+            Recorder.recordings[Recorder.selectedRecording].data = Recorder.currentData
+        end
+    else
+        Recorder.isRecording = true
+        Recorder.isPlaying = false
+    end
+end
+
+function Recorder.TogglePlayback()
+    if Recorder.isRecording then
+        Recorder.isRecording = false
+        if Recorder.selectedRecording then
+            Recorder.recordings[Recorder.selectedRecording].data = Recorder.currentData
+        end
+    end
+    Recorder.isPlaying = not Recorder.isPlaying
+end
+
+-- Save recordings to file
+function Recorder.SaveRecordings()
+    Config:Save("recordings.json")
+end
+
+-- Load recordings from file
+function Recorder.LoadRecordings()
+    Config:Load("recordings.json")
 end
 
 callbacks.Unregister("CreateMove", "LNX.Recorder.CreateMove")
 callbacks.Register("CreateMove", "LNX.Recorder.CreateMove", OnCreateMove)
-
-callbacks.Unregister("Draw", "LNX.Recorder.Draw")
-callbacks.Register("Draw", "LNX.Recorder.Draw", OnDraw)
 
 return Recorder
