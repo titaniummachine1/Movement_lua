@@ -4,12 +4,12 @@
     Autor: Titaniummachine1
 ]]
 
---[[ actiave the script Modules]]
+--[[ Activate the script Modules ]]
 local Common = require("Movement.Common")
 local G = require("Movement.Globals")
 require("Movement.Config")
-require("Movement.Visuals") --wake up the visuals
-require("Movement.Menu")--wake up the menu
+require("Movement.Visuals") -- wake up the visuals
+require("Movement.Menu")    -- wake up the menu
 
 local function OnCreateMove(cmd)
     -- Get the local player
@@ -18,81 +18,79 @@ local function OnCreateMove(cmd)
 
     -- Check if the local player is valid and alive
     if not G.Menu.Enable or not G.pLocal or not G.pLocal:IsAlive() or not WLocal then
-        G.jumpState = G.STATE_IDLE  -- Reset to STATE_IDLE state if player is not valid or alive
+        G.jumpState = G.STATE_IDLE  -- Reset state if player is not valid or alive
         return
     end
 
-    -- cache player flags
+    -- Cache player flags
     G.onGround = Common.isPlayerOnGround(G.pLocal)
     G.Ducking = Common.isPlayerDucking(G.pLocal)
 
     -- Calculate the strafe angle
     G.strafeAngle = Common.CalcStrafe(WLocal)
 
-    --fix the hitbox
+    -- Fix the hitbox based on ducking state
     if G.Ducking then
         G.vHitbox[2].z = 62
     else
         G.vHitbox[2].z = 82
     end
 
-    -- Check if the player is on the ground and fully crouched, and handle edge case
-    if G.onGround and (G.pLocal:GetPropVector("m_vecViewOffset[0]").z < 65 or G.Ducking) and G.jumpState ~= G.STATE_CTAP then
-        G.jumpState = G.STATE_CTAP  -- Transition to STATE_CTAP to resolve the logical error
-    end
+    -- Remove the forced state change based solely on crouch and view offset.
+    -- Instead, let the smartjump logic decide when to jump.
 
-    -- State machine for CTAP and jumping
+    -- State machine for jump logic
     if G.jumpState == G.STATE_IDLE then
-        -- STATE_IDLE: Waiting for jump commands
-        Common.SmartJump(cmd) --do smartjump logic
+        -- STATE_IDLE: Waiting for jump commands.
+        Common.SmartJump(cmd) -- Execute smartjump logic which sets G.ShouldJump
 
-        if G.onGround or G.ShouldJump then
-            if G.ShouldJump then
-                G.jumpState = G.STATE_PREPARE_JUMP  -- Transition to STATE_PREPARE_JUMP if jump key is pressed or ShouldJump is true
-            end
+        if G.onGround and G.ShouldJump then
+            G.jumpState = G.STATE_PREPARE_JUMP  -- Transition if jump is desired
+            G.ShouldJump = false                -- Reset the flag so it doesn't persist
         end
 
     elseif G.jumpState == G.STATE_PREPARE_JUMP then
-        -- STATE_PREPARE_JUMP: Start crouching
-        cmd:SetButtons(cmd.buttons | IN_DUCK)  -- Duck
-        cmd:SetButtons(cmd.buttons & (~IN_JUMP))  -- Uncrouch
-        G.jumpState = G.STATE_CTAP  -- Transition to STATE_CTAP to prepare for jump
+        -- STATE_PREPARE_JUMP: Start crouching.
+        cmd:SetButtons(cmd.buttons | IN_DUCK)   -- Begin crouching
+        cmd:SetButtons(cmd.buttons & (~IN_JUMP))  -- Ensure jump button is not active yet
+        G.jumpState = G.STATE_CTAP              -- Transition to CTAP state
         return
 
     elseif G.jumpState == G.STATE_CTAP then
-        -- STATE_CTAP: Uncrouch and jump
+        -- STATE_CTAP: Uncrouch and initiate jump.
         cmd:SetButtons(cmd.buttons & (~IN_DUCK))  -- UnDuck
-        cmd:SetButtons(cmd.buttons | IN_JUMP)     -- Jump
-        G.jumpState = G.STATE_ASCENDING  -- Transition to STATE_ASCENDING after initiating jump
+        cmd:SetButtons(cmd.buttons | IN_JUMP)     -- Press jump
+        G.jumpState = G.STATE_ASCENDING           -- Transition to ascending state
         return
 
     elseif G.jumpState == G.STATE_ASCENDING then
-        -- STATE_ASCENDING: Player is moving upwards
-        cmd:SetButtons(cmd.buttons | IN_DUCK)  -- Crouch mid-air
+        -- STATE_ASCENDING: Player is moving upward.
+        cmd:SetButtons(cmd.buttons | IN_DUCK)  -- Maintain crouch mid-air
         if G.pLocal:EstimateAbsVelocity().z <= 0 then
-            G.jumpState = G.STATE_DESCENDING  -- Transition to STATE_DESCENDING once upward velocity stops
+            G.jumpState = G.STATE_DESCENDING  -- Transition when upward velocity stops
         end
         return
 
     elseif G.jumpState == G.STATE_DESCENDING then
-        -- STATE_DESCENDING: Player is falling down
-        cmd:SetButtons(cmd.buttons & (~IN_DUCK))  -- UnDuck when falling
+        -- STATE_DESCENDING: Player is falling.
+        cmd:SetButtons(cmd.buttons & (~IN_DUCK))  -- UnDuck while descending
 
         G.PredData = Common.Prediction.Player(WLocal, 1, G.strafeAngle, nil)
         if not G.PredData then return end
 
-        G.PredPos = G.PredData.pos[1] --update predpos
+        G.PredPos = G.PredData.pos[1]  -- Update predicted landing position
 
-        if not G.PredData.onGround[1] or not G.onGround then --when on ground or will be on ground next tick
+        if not G.PredData.onGround[1] or not G.onGround then
             Common.SmartJump(cmd)
-            if ShouldJump then
+            if G.ShouldJump then
                 cmd:SetButtons(cmd.buttons & (~IN_DUCK))
                 cmd:SetButtons(cmd.buttons | IN_JUMP)
-                G.jumpState = G.STATE_PREPARE_JUMP  -- Transition back to STATE_PREPARE_JUMP for bhop
+                G.jumpState = G.STATE_PREPARE_JUMP  -- Re-initiate jump (for bunny hopping)
+                G.ShouldJump = false                -- Reset jump flag after processing
             end
         else
             cmd:SetButtons(cmd.buttons | IN_DUCK)
-            G.jumpState = G.STATE_IDLE  -- Transition back to STATE_IDLE once player lands
+            G.jumpState = G.STATE_IDLE  -- Once landed, reset to idle
         end
     end
 end
