@@ -45,4 +45,7 @@ G.Menu = {
     Visuals = true,
 }
 
+-- Table to store recordings
+G.Recordings = {}
+
 return G

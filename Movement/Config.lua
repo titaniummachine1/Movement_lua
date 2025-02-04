@@ -13,8 +13,11 @@ local Lua__fullPath = GetScriptName()
 local Lua__fileName = Lua__fullPath:match("\\([^\\]-)$"):gsub("%.lua$", "")
 local folder_name = string.format([[Lua %s]], Lua__fileName)
 
-filesystem.CreateDirectory(folder_name)
-local filePath = folder_name .. "/config.json"
+-- Ensure the folder exists
+local _, fullPath = filesystem.CreateDirectory(folder_name) --succes shows if folder was created not if it exists or action suceeded
+
+local configFilePath = fullPath .. "/config.json"
+local recordingsFilePath = fullPath .. "/recordings.json"
 
 -- Default configuration table
 local defaultConfig = {
@@ -68,57 +71,78 @@ local function deepCheck(expected, loaded)
     return true
 end
 
--- Save the current configuration to file (in JSON format)
-function Config:Save()
+-- Save data to file (in JSON format)
+local function SaveToFile(filePath, data, successMessage, errorMessage)
     local file = io.open(filePath, "w")
     if file then
-        -- Create a deep copy of the configuration data using defaultConfig as a filter.
-        local dataToSave = copyMatchingKeys(G, defaultConfig)
-        local content = json.encode(dataToSave)
+        local content = json.encode(data)
         file:write(content)
         file:close()
-        printc(100, 183, 0, 255, "Success Saving Config: " .. filePath)
+        printc(100, 183, 0, 255, successMessage .. ": " .. filePath)
+        Notify.Simple("Success! " .. successMessage, filePath, 5)
     else
-        printc(255, 0, 0, 255, "Failed to open file for writing: " .. filePath)
+        printc(255, 0, 0, 255, errorMessage .. ": " .. filePath)
+        Notify.Simple("Error", errorMessage .. ": " .. filePath, 5)
     end
 end
 
--- Load configuration from file.
-function Config:Load()
+-- Load data from file
+local function LoadFromFile(filePath, defaultData, successMessage, errorMessage)
     local file = io.open(filePath, "r")
     if file then
         local content = file:read("*a")
         file:close()
-        local loadedConfig, decodeErr = json.decode(content)
-        if loadedConfig and deepCheck(defaultConfig, loadedConfig) and not input.IsButtonDown(KEY_LSHIFT) then
-            -- Overwrite our configuration values with those from the file.
-            for key, value in pairs(loadedConfig) do
+        local loadedData, decodeErr = json.decode(content)
+        if loadedData and deepCheck(defaultData, loadedData) and not input.IsButtonDown(KEY_LSHIFT) then
+            for key, value in pairs(loadedData) do
                 G[key] = value
             end
-            printc(100, 183, 0, 255, "Success Loading Config: " .. filePath)
-            Notify.Simple("Success! Loaded Config from", filePath, 5)
+            printc(100, 183, 0, 255, successMessage .. ": " .. filePath)
+            Notify.Simple("Success! " .. successMessage, filePath, 5)
         else
-            local warnMsg = decodeErr or "Config is outdated or invalid. Creating a new config."
+            local warnMsg = decodeErr or "Data is outdated or invalid. Creating a new file."
             printc(255, 0, 0, 255, warnMsg)
             Notify.Simple("Warning", warnMsg, 5)
-            self:Save()
+            SaveToFile(filePath, defaultData, successMessage, errorMessage)
         end
     else
-        local warnMsg = "Config file not found. Creating a new config."
+        local warnMsg = "File not found. Creating a new file."
         printc(255, 0, 0, 255, warnMsg)
         Notify.Simple("Warning", warnMsg, 5)
-        self:Save()
+        SaveToFile(filePath, defaultData, successMessage, errorMessage)
     end
+end
+
+-- Save the current configuration to file
+function Config:Save()
+    SaveToFile(configFilePath, copyMatchingKeys(G, defaultConfig), "Saved Config to", "Failed to open file for writing")
+end
+
+-- Load configuration from file
+function Config:Load()
+    LoadFromFile(configFilePath, defaultConfig, "Loaded Config from", "Failed to load config")
+end
+
+-- Save recordings to file
+function Config:SaveRecordings()
+    SaveToFile(recordingsFilePath, G.Recordings, "Saved Recordings to", "Failed to open file for writing")
+end
+
+-- Load recordings from file
+function Config:LoadRecordings()
+    LoadFromFile(recordingsFilePath, {}, "Loaded Recordings from", "Failed to load recordings")
 end
 
 local function OnUnload()
     Config:Save()
+    Config:SaveRecordings()
 end
 
 callbacks.Unregister("Unload", "Movement_Unload")
 callbacks.Register("Unload", "Movement_Unload", OnUnload)
 
--- Auto-load the configuration when the module is required.
+-- Auto-load the configuration and recordings when the module is required.
 Config:Load()
+Config:LoadRecordings()
 
 return Config
