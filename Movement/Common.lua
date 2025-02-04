@@ -121,53 +121,7 @@ function Common.SmartVelocity(cmd)
     return vel
 end
 
-
--- Smart jump logic
-function Common.SmartJump(cmd)
-    if not G.pLocal then return end
-
-    -- Get the player's data
-    local pLocalPos = G.pLocal:GetAbsOrigin()
-    local vel = Common.SmartVelocity(cmd) -- Adjust velocity based on movement input
-
-    if G.Menu.SmartJump and G.onGround then
-        local JumpPeekPerfectPos, JumpDirection = Common.GetJumpPeak(vel, pLocalPos)
-        G.JumpPeekPos = JumpPeekPerfectPos
-
-        -- Trace to the peak position
-        local trace = engine.TraceHull(pLocalPos, G.JumpPeekPos, G.vHitbox[1], G.vHitbox[2], MASK_PLAYERSOLID_BRUSHONLY)
-        G.JumpPeekPos = trace.endpos
-
-        if trace.fraction < 1 then
-            -- Move up by jump height
-            local startrace = trace.endpos + G.MAX_JUMP_HEIGHT
-
-            -- Move one unit forward
-            local endtrace = startrace + JumpDirection * 1
-
-            -- Forward trace to check for sliding on possible walls
-            local forwardTrace = engine.TraceHull(startrace, endtrace, G.vHitbox[1], G.vHitbox[2], MASK_PLAYERSOLID_BRUSHONLY)
-            G.JumpPeekPos = forwardTrace.endpos
-
-            -- Lastly, trace down to check for landing
-            local traceDown = engine.TraceHull(G.JumpPeekPos, G.JumpPeekPos - G.MAX_JUMP_HEIGHT, G.vHitbox[1], G.vHitbox[2], MASK_PLAYERSOLID_BRUSHONLY)
-            G.JumpPeekPos = traceDown.endpos
-
-            if traceDown.fraction > 0 and traceDown.fraction < 0.75 then
-                local normal = traceDown.plane
-                if Common.isSurfaceWalkable(normal) then
-                    G.ShouldJump = true
-                else
-                    G.ShouldJump = false
-                end
-            end
-        end
-    elseif input.IsButtonDown(KEY_SPACE) then
-        G.ShouldJump = true
-    else
-        G.ShouldJump = false
-    end
-end
+-- Smart jump logic moved to a separate module
 
 --[[ Callbacks ]]
 local function OnUnload() -- Called when the script is unloaded

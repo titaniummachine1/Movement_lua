@@ -10,6 +10,7 @@ local G = require("Movement.Globals")
 require("Movement.Config")
 require("Movement.Visuals") -- wake up the visuals
 require("Movement.Menu")    -- wake up the menu
+local SmartJump = require("Movement.Modules.SmartJump") -- Import the SmartJump module
 
 local function OnCreateMove(cmd)
     -- Get the local player
@@ -42,7 +43,7 @@ local function OnCreateMove(cmd)
     -- State machine for jump logic
     if G.jumpState == G.STATE_IDLE then
         -- STATE_IDLE: Waiting for jump commands.
-        Common.SmartJump(cmd) -- Execute smartjump logic which sets G.ShouldJump
+        SmartJump.Execute(cmd) -- Execute smartjump logic which sets G.ShouldJump
 
         if G.onGround and G.ShouldJump then
             G.jumpState = G.STATE_PREPARE_JUMP  -- Transition if jump is desired
@@ -81,7 +82,7 @@ local function OnCreateMove(cmd)
         G.PredPos = G.PredData.pos[1]  -- Update predicted landing position
 
         if not G.PredData.onGround[1] or not G.onGround then
-            Common.SmartJump(cmd)
+            SmartJump.Execute(cmd)
             if G.ShouldJump then
                 cmd:SetButtons(cmd.buttons & (~IN_DUCK))
                 cmd:SetButtons(cmd.buttons | IN_JUMP)
